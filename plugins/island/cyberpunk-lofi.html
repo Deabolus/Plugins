@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="launcher-type" content="island">
+    <meta name="island-aspect" content="1.5">
+    <title>Cyberpunk Lo-fi</title>
+    <style>
+      :root {
+        --bg: #06070d;
+        --bg-soft: rgba(14, 16, 26, 0.8);
+        --panel: rgba(14, 13, 23, 0.92);
+        --panel-strong: rgba(12, 12, 20, 0.96);
+        --text: #f3ebff;
+        --muted: rgba(228, 220, 250, 0.7);
+        --accent-1: #7a5cff;
+        --accent-2: #55d6ff;
+        --accent-3: #ffbcf2;
+        --line: rgba(255, 255, 255, 0.08);
+        --shadow: rgba(7, 10, 26, 0.8);
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        font-family: "Segoe UI", "Roboto", sans-serif;
+        color: var(--text);
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+      }
+
+      .island-shell {
+        position: relative;
+        width: 360px;
+        height: 300px;
+        border-radius: 28px;
+        overflow: hidden;
+        background: radial-gradient(circle at top left, rgba(126, 94, 255, 0.18), transparent 35%),
+          radial-gradient(circle at bottom right, rgba(85, 214, 255, 0.12), transparent 32%),
+          rgba(6, 8, 16, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 20px 50px rgba(3, 6, 16, 0.7), inset 0 1px 0 rgba(255,255,255,0.04);
+      }
+
+      .noise {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: linear-gradient(rgba(255,255,255,0.02), rgba(255,255,255,0.02));
+        background-size: 100% 3px;
+        mix-blend-mode: screen;
+        opacity: 0.3;
+      }
+
+      .halo {
+        position: absolute;
+        inset: -15% -10% auto auto;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(122, 92, 255, 0.28), rgba(122, 92, 255, 0) 69%);
+        filter: blur(24px);
+        pointer-events: none;
+      }
+
+      .inner {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        padding: 16px 16px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 72px;
+      }
+
+      .art {
+        position: relative;
+        width: 68px;
+        height: 68px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(90, 177, 255, 0.7), rgba(125, 92, 255, 0.9));
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 12px 22px rgba(25, 18, 63, 0.45);
+        background-size: cover;
+        background-position: center;
+        overflow: hidden;
+      }
+
+      .art::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(0,0,0,0.18));
+      }
+
+      .meta {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+      }
+
+      .artist {
+        font-size: 11px;
+        line-height: 1.2;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .title {
+        font-size: 16px;
+        line-height: 1.2;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .status-chip {
+        padding: 6px 8px;
+        font-size: 9px;
+        letter-spacing: 0.14em;
+        color: rgba(255,255,255,0.85);
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.04);
+        box-shadow: inset 0 0 18px rgba(255,255,255,0.03);
+      }
+
+      .middle {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-height: 92px;
+        padding: 4px 2px 0;
+      }
+
+      .eq {
+        display: flex;
+        align-items: end;
+        gap: 3px;
+        width: 104px;
+        height: 44px;
+        padding: 8px 0 6px;
+      }
+
+      .bar {
+        width: 5px;
+        border-radius: 4px 4px 0 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.9), var(--accent-2) 45%, var(--accent-1));
+        height: 10px;
+        transform-origin: bottom center;
+        animation: pulse 1.05s ease-in-out infinite alternate;
+        opacity: 0.9;
+        box-shadow: 0 0 12px rgba(85, 214, 255, 0.25);
+      }
+
+      .bar:nth-child(2n) { animation-delay: 0.12s; }
+      .bar:nth-child(3n) { animation-delay: 0.24s; }
+      .bar:nth-child(4n) { animation-delay: 0.36s; }
+      .bar:nth-child(5n) { animation-delay: 0.48s; }
+      .bar:nth-child(6n) { animation-delay: 0.6s; }
+
+      .bar.paused {
+        animation: none;
+        opacity: 0.55;
+        height: 12px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(148, 159, 200, 0.7));
+      }
+
+      .progress-wrap {
+        position: relative;
+        flex: 1;
+        height: 48px;
+        display: flex;
+        align-items: center;
+      }
+
+      .progress-track {
+        position: relative;
+        width: 100%;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.05);
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .progress-fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 0%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-3));
+        box-shadow: 0 0 16px rgba(91, 191, 255, 0.45);
+      }
+
+      .time {
+        position: absolute;
+        right: 4px;
+        bottom: -4px;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: center;
+        gap: 10px;
+        padding: 2px 10px 0;
+      }
+
+      .control-btn {
+        appearance: none;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        color: var(--text);
+        border-radius: 14px;
+        height: 42px;
+        font-size: 18px;
+        font-weight: 700;
+        transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+      }
+
+      .control-btn:active {
+        transform: scale(0.97);
+      }
+
+      .control-btn.play {
+        background: linear-gradient(135deg, rgba(122, 92, 255, 0.18), rgba(85, 214, 255, 0.18));
+        border-color: rgba(122, 92, 255, 0.4);
+      }
+
+      .bottom {
+        position: relative;
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        margin-top: auto;
+        padding-top: 2px;
+      }
+
+      .character-wrap {
+        position: relative;
+        flex: 1;
+        display: flex;
+        align-items: end;
+        justify-content: center;
+        min-height: 80px;
+      }
+
+      .character {
+        position: relative;
+        width: 72px;
+        height: 72px;
+        filter: drop-shadow(0 0 14px rgba(122, 92, 255, 0.28));
+        animation: sway 4s ease-in-out infinite;
+      }
+
+      .character.paused {
+        animation-play-state: paused;
+      }
+
+      .sprite {
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+        width: 72px;
+        height: 72px;
+        background: transparent;
+      }
+
+      .pixel {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        background: var(--pixel-color, #f8e6ff);
+        box-shadow: 0 0 8px rgba(122, 92, 255, 0.2);
+      }
+
+      .sprite .hair { --pixel-color: #9b66ff; }
+      .sprite .cloth { --pixel-color: #1b1c2f; }
+      .sprite .skin { --pixel-color: #f4d4cc; }
+      .sprite .neon { --pixel-color: #5fe3ff; }
+      .sprite .violet { --pixel-color: #b280ff; }
+
+      .quote {
+        position: absolute;
+        right: 0;
+        bottom: 14px;
+        max-width: 145px;
+        min-height: 26px;
+        padding: 6px 8px;
+        border-radius: 12px 12px 12px 6px;
+        background: rgba(8, 10, 18, 0.72);
+        border: 1px solid rgba(255,255,255,0.06);
+        color: rgba(246, 241, 255, 0.9);
+        font-size: 10px;
+        line-height: 1.3;
+        letter-spacing: 0.02em;
+        text-align: left;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.26);
+      }
+
+      @keyframes sway {
+        0%, 100% { transform: rotate(-2deg) translateY(0); }
+        50% { transform: rotate(2deg) translateY(-2px); }
+      }
+
+      @keyframes pulse {
+        0% { transform: scaleY(0.5); opacity: 0.5; }
+        100% { transform: scaleY(1); opacity: 1; }
+      }
+
+      @media (max-width: 380px) {
+        .island-shell {
+          width: 100vw;
+          height: 280px;
+          border-radius: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="island-shell" id="shell">
+      <div class="noise"></div>
+      <div class="halo"></div>
+
+      <div class="inner">
+        <div class="topbar">
+          <div id="artBox" class="art" aria-label="Album art"></div>
+          <div class="meta">
+            <div id="artistLabel" class="artist">LO-FI ROOM</div>
+            <div id="titleLabel" class="title">Cyberpunk Lo-fi</div>
+          </div>
+          <div id="statusChip" class="status-chip">LO-FI</div>
+        </div>
+
+        <div class="middle">
+          <div id="eq" class="eq" aria-label="Equalizer">
+            <span class="bar paused" style="height:8px"></span>
+            <span class="bar paused" style="height:20px"></span>
+            <span class="bar paused" style="height:26px"></span>
+            <span class="bar paused" style="height:16px"></span>
+            <span class="bar paused" style="height:23px"></span>
+            <span class="bar paused" style="height:14px"></span>
+            <span class="bar paused" style="height:18px"></span>
+            <span class="bar paused" style="height:10px"></span>
+            <span class="bar paused" style="height:22px"></span>
+            <span class="bar paused" style="height:16px"></span>
+            <span class="bar paused" style="height:12px"></span>
+            <span class="bar paused" style="height:24px"></span>
+          </div>
+
+          <div class="progress-wrap">
+            <div id="progressTrack" class="progress-track" aria-label="Playback progress">
+              <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div id="timeLabel" class="time">0:00 / 0:00</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="control-btn" data-action="prev" aria-label="Previous track">⏮</button>
+          <button class="control-btn play" data-action="toggle" aria-label="Play or pause">▶</button>
+          <button class="control-btn" data-action="next" aria-label="Next track">⏭</button>
+        </div>
+
+        <div class="bottom">
+          <div class="character-wrap">
+            <div id="character" class="character paused" aria-label="Pixel character">
+              <div class="sprite">
+                <div class="pixel hair" style="left:20px; top:6px; width:32px; height:8px"></div>
+                <div class="pixel hair" style="left:12px; top:14px; width:48px; height:10px"></div>
+                <div class="pixel hair" style="left:8px; top:22px; width:8px; height:16px"></div>
+                <div class="pixel hair" style="left:56px; top:22px; width:8px; height:16px"></div>
+                <div class="pixel skin" style="left:20px; top:22px; width:32px; height:18px"></div>
+                <div class="pixel skin" style="left:16px; top:40px; width:40px; height:14px"></div>
+                <div class="pixel neon" style="left:20px; top:28px; width:8px; height:8px"></div>
+                <div class="pixel neon" style="left:44px; top:28px; width:8px; height:8px"></div>
+                <div class="pixel violet" style="left:12px; top:38px; width:8px; height:12px"></div>
+                <div class="pixel violet" style="left:52px; top:38px; width:8px; height:12px"></div>
+                <div class="pixel cloth" style="left:16px; top:54px; width:40px; height:10px"></div>
+                <div class="pixel cloth" style="left:20px; top:62px; width:10px; height:10px"></div>
+                <div class="pixel cloth" style="left:42px; top:62px; width:10px; height:10px"></div>
+                <div class="pixel violet" style="left:28px; top:50px; width:16px; height:4px"></div>
+                <div class="pixel hair" style="left:20px; top:18px; width:4px; height:4px"></div>
+                <div class="pixel hair" style="left:48px; top:18px; width:4px; height:4px"></div>
+                <div class="pixel cloth" style="left:0px; top:38px; width:8px; height:20px"></div>
+                <div class="pixel cloth" style="left:64px; top:38px; width:8px; height:20px"></div>
+                <div class="pixel violet" style="left:30px; top:8px; width:12px; height:6px"></div>
+                <div class="pixel violet" style="left:24px; top:60px; width:8px; height:8px"></div>
+                <div class="pixel violet" style="left:40px; top:60px; width:8px; height:8px"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="quote" class="quote">Choose something to play?</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const state = {
+        accent: '#7a5cff',
+        lastTrackKey: '',
+        lastQuoteKey: 'idle',
+        lastQuoteAt: 0,
+        media: null,
+        ready: false
+      };
+
+      const els = {
+        shell: document.getElementById('shell'),
+        art: document.getElementById('artBox'),
+        artist: document.getElementById('artistLabel'),
+        title: document.getElementById('titleLabel'),
+        status: document.getElementById('statusChip'),
+        eq: document.getElementById('eq'),
+        progressFill: document.getElementById('progressFill'),
+        track: document.getElementById('progressTrack'),
+        time: document.getElementById('timeLabel'),
+        character: document.getElementById('character'),
+        quote: document.getElementById('quote'),
+        playButton: document.querySelector('[data-action="toggle"]')
+      };
+
+      function clamp(value, min, max) {
+        if (!Number.isFinite(value)) return min;
+        return Math.min(Math.max(value, min), max);
+      }
+
+      function safeValue(source, key, fallback) {
+        if (!source || typeof source !== 'object') return fallback;
+        const value = source[key];
+        return value !== undefined && value !== null && value !== '' ? value : fallback;
+      }
+
+      function formatTime(seconds) {
+        const safe = Number(seconds) || 0;
+        const total = Math.max(0, Math.floor(safe));
+        const minutes = Math.floor(total / 60);
+        const secs = total % 60;
+        return `${minutes}:${String(secs).padStart(2, '0')}`;
+      }
+
+      function resolvePlaybackState(media) {
+        const stateValue = String(safeValue(media, 'state', '')).toLowerCase();
+        const speed = Number(safeValue(media, 'speed', 0));
+        const play = safeValue(media, 'play', null);
+        if (play === true || play === 'true') return true;
+        if (play === false || play === 'false') return false;
+        if (stateValue.includes('play')) return true;
+        if (stateValue.includes('pause')) return false;
+        return Number.isFinite(speed) && speed > 0;
+      }
+
+      function buildQuote(media, isPlaying) {
+        const title = String(safeValue(media, 'title', '') || '');
+        const trackKey = `${title}|${safeValue(media, 'artist', '')}|${safeValue(media, 'album', '')}`;
+        const now = Date.now();
+
+        if (!title && !safeValue(media, 'artist', '')) {
+          if (now - state.lastQuoteAt > 4000 || state.lastQuoteKey !== 'idle') {
+            state.lastQuoteKey = 'idle';
+            state.lastQuoteAt = now;
+            return 'Choose something to play?';
+          }
+          return state.lastQuoteKey === 'idle' ? 'Choose something to play?' : 'A little silence...';
+        }
+
+        if (!isPlaying) {
+          if (now - state.lastQuoteAt > 5000 || state.lastQuoteKey !== 'paused') {
+            state.lastQuoteKey = 'paused';
+            state.lastQuoteAt = now;
+            return 'A little silence...';
+          }
+          return 'A little silence...';
+        }
+
+        if (trackKey !== state.lastTrackKey) {
+          state.lastTrackKey = trackKey;
+          if (now - state.lastQuoteAt > 2500 || state.lastQuoteKey !== 'new-track') {
+            state.lastQuoteKey = 'new-track';
+            state.lastQuoteAt = now;
+            return 'Oh, this one is nice!';
+          }
+        }
+
+        if (now - state.lastQuoteAt > 6000 || state.lastQuoteKey !== 'playing') {
+          state.lastQuoteKey = 'playing';
+          state.lastQuoteAt = now;
+          return 'Listening with you...';
+        }
+
+        return 'Listening with you...';
+      }
+
+      function updateBars(isPlaying) {
+        const bars = [...els.eq.querySelectorAll('.bar')];
+        bars.forEach((bar, index) => {
+          const base = 12 + ((index * 11) % 26);
+          const height = isPlaying ? Math.max(12, (Math.sin(index * 1.3 + Date.now() / 200) + 1) * 18 + 6) : base;
+          bar.style.height = `${height}px`;
+          bar.classList.toggle('paused', !isPlaying);
+        });
+      }
+
+      function applyArt(url) {
+        const cleanUrl = typeof url === 'string' && url.trim().length > 0 ? url.trim() : '';
+        if (!cleanUrl) {
+          els.art.style.background = 'linear-gradient(135deg, rgba(90, 177, 255, 0.7), rgba(125, 92, 255, 0.9))';
+          els.art.style.backgroundImage = 'linear-gradient(135deg, rgba(90, 177, 255, 0.7), rgba(125, 92, 255, 0.9))';
+          return;
+        }
+
+        els.art.style.backgroundImage = `url("${cleanUrl}")`;
+        els.art.style.backgroundSize = 'cover';
+        els.art.style.backgroundPosition = 'center';
+      }
+
+      function extractAccentFromImage(url) {
+        if (!url || typeof url !== 'string') return;
+        const image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = () => {
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          const sampleSize = 32;
+          canvas.width = sampleSize;
+          canvas.height = sampleSize;
+          context.drawImage(image, 0, 0, sampleSize, sampleSize);
+          const data = context.getImageData(0, 0, sampleSize, sampleSize).data;
+          let r = 0, g = 0, b = 0, count = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            const alpha = data[i + 3];
+            if (alpha < 64) continue;
+            r += data[i];
+            g += data[i + 1];
+            b += data[i + 2];
+            count++;
+          }
+          if (!count) return;
+          const avgR = Math.round(r / count);
+          const avgG = Math.round(g / count);
+          const avgB = Math.round(b / count);
+          const hex = [avgR, avgG, avgB].map(value => value.toString(16).padStart(2, '0')).join('');
+          state.accent = `#${hex}`;
+          const root = document.documentElement;
+          root.style.setProperty('--accent-1', state.accent);
+          root.style.setProperty('--accent-2', '#58d7ff');
+          root.style.setProperty('--accent-3', '#ffbbf1');
+        };
+        image.src = url;
+      }
+
+      function syncTheme() {
+        const root = document.documentElement;
+        root.style.setProperty('--accent-1', state.accent);
+        root.style.setProperty('--accent-2', '#58d7ff');
+        root.style.setProperty('--accent-3', '#ffbbf1');
+      }
+
+      function updateFromMedia() {
+        const media = state.media || {};
+        const title = String(safeValue(media, 'title', 'Cyberpunk Lo-fi')).trim() || 'Cyberpunk Lo-fi';
+        const artist = String(safeValue(media, 'artist', 'Lo-fi Room')).trim() || 'Lo-fi Room';
+        const artUrl = String(safeValue(media, 'art', '') || '').trim();
+        const isPlaying = resolvePlaybackState(media);
+        const pos = Number(safeValue(media, 'pos', 0));
+        const dur = Number(safeValue(media, 'dur', 0));
+        const safeDuration = dur > 0 ? dur : 0;
+        const progress = safeDuration > 0 ? clamp((pos / safeDuration) * 100, 0, 100) : 0;
+
+        els.title.textContent = title;
+        els.artist.textContent = artist;
+        els.status.textContent = isPlaying ? 'PLAYING' : 'PAUSED';
+        els.playButton.textContent = isPlaying ? '❚❚' : '▶';
+        els.character.classList.toggle('paused', !isPlaying);
+        els.progressFill.style.width = `${progress}%`;
+        els.time.textContent = `${formatTime(pos)} / ${formatTime(safeDuration)}`;
+        els.quote.textContent = buildQuote(media, isPlaying);
+
+        if (artUrl) {
+          applyArt(artUrl);
+          extractAccentFromImage(artUrl);
+        } else {
+          applyArt('');
+        }
+
+        if (!artUrl && state.ready) {
+          els.shell.style.background = 'radial-gradient(circle at top left, rgba(122, 92, 255, 0.18), transparent 35%), rgba(6, 8, 16, 0.95)';
+        }
+
+        updateBars(isPlaying);
+      }
+
+      function onControl(action) {
+        if (!action || typeof Island === 'undefined' || typeof Island.control !== 'function') return;
+        Island.control(action);
+      }
+
+      document.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-action]');
+        if (!button) return;
+        onControl(button.dataset.action);
+      });
+
+      document.getElementById('progressTrack').addEventListener('click', (event) => {
+        if (!Island || typeof Island.seek !== 'function') return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        const percent = clamp((event.clientX - rect.left) / rect.width, 0, 1);
+        Island.seek(percent);
+      });
+
+      function initializeTheme() {
+        syncTheme();
+        const media = (typeof Island !== 'undefined' && typeof Island.media === 'function') ? Island.media() : null;
+        state.media = media || {};
+        state.ready = true;
+        updateFromMedia();
+      }
+
+      window.__island = function () {
+        const media = (typeof Island !== 'undefined' && typeof Island.media === 'function') ? Island.media() : null;
+        state.media = media || state.media || {};
+        updateFromMedia();
+      };
+
+      window.addEventListener('load', initializeTheme);
+      if (document.readyState === 'complete') {
+        initializeTheme();
+      }
+    </script>
+  </body>
+</html>
